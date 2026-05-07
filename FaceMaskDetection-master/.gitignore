@@ -8,3 +8,13 @@ models/
 *.hdf5
 *.pb
 *.tflite
+models/
+*.pth
+*.hdf5
+*.pb
+*.tflite
+models/
+*.pth
+*.hdf5
+*.pb
+*.tflite
