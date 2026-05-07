@@ -1,154 +1,153 @@
 # FaceMaskDetection
 
-### We open source all the popular deep learning frameworks' model and inference code to do face mask detection.
+We open source all the popular deep learning frameworks' model and inference code to do face mask detection.
 
 - [x] PyTorch
-- [x] TensorFlow（include tflite and pb model）
+- [x] TensorFlow (include tflite and pb model)
 - [x] Keras
 - [x] MXNet
 - [x] Caffe
 - [x] Paddle
 - [x] OpenCV dnn
 
-** Detect faces and determine whether they are wearing mask. **
+**Detect faces and determine whether they are wearing a mask.**
 
-** First of all, we hope the people in the world defeat COVID-2019 as soon as possible. Stay strong, all the countries in the world.**
+![](FaceMaskDetection-master/img/demo.png)
 
-- We make face mask detection models with five mainstream deep learning frameworks （PyTorch、TensorFlow、Keras、MXNet和caffe） open sourced, and the corresponding inference codes.
+We published 7971 images to train the models. The dataset is composed of [WIDER Face](http://shuoyang1213.me/WIDERFACE/) and [MAFA](http://www.escience.cn/people/geshiming/mafa.html). You can download it from [Google Drive](https://drive.google.com/file/d/1QspxOJMDf_rAWVV7AU_Nc0rjo1_EPEDW/view?usp=sharing).
 
-- We published 7971 images to train the models. The dataset is composed of [WIDER Face](http://shuoyang1213.me/WIDERFACE/) and [MAFA](http://www.escience.cn/people/geshiming/mafa.html), we verified some wrong annotations. You can download here from [Google drive](https://drive.google.com/file/d/1QspxOJMDf_rAWVV7AU_Nc0rjo1_EPEDW/view?usp=sharing), if you can not visit Google, you can download it from BaiduDisk, click [here to know how to download](README-zh.md).
+---
 
-![](img/demo.png)
+## Model Structure
 
-We deployed a web page, you can click the link to experience it.
-The page is writen by Tensorflow.js.
+SSD-based lightweight model. Input size: **260x260**. Total parameters: **1.01M**.
 
-[AIZOO face mask detection](https://demo.aizoo.com/face-mask-detection.html)
+| Layer | Feature Map | Anchor Size | Aspect Ratio |
+|-------|-------------|-------------|--------------|
+| First | 33x33 | 0.04, 0.056 | 1, 0.62, 0.42 |
+| Second | 17x17 | 0.08, 0.11 | 1, 0.62, 0.42 |
+| Third | 9x9 | 0.16, 0.22 | 1, 0.62, 0.42 |
+| Fourth | 5x5 | 0.32, 0.45 | 1, 0.62, 0.42 |
+| Fifth | 3x3 | 0.64, 0.72 | 1, 0.62, 0.42 |
 
-## Model structure
+---
 
-We used the structure of SSD. However, in order to make it run quickly in the browser, the backbone network is lite. The total model only has 1.01M parametes.
+## Installation
 
-Input size of the model is 260x260, the backbone network only has 8 conv layers. The total model has only 24 layers with the location and classification layers counted.
+```bash
+git clone https://github.com/Muawiya-contact/FaceMaskDetection.git
+cd FaceMaskDetection
 
-SSD anchor configurtion is show bellow:
+python -m venv .venv
 
-| multibox layers | feature map size | anchor size | aspect ratio） |
-| --------------- | ---------------- | ----------- | -------------- | ----------- |
-| First           | 33x33            | 0.04,0.056  | 1,0.62,0.42    |
-| Second          |                  | 17x17       | 0.08,0.11      | 1,0.62,0.42 |
-| Third           | 9x9              | 0.16,0.22   | 1,0.62,0.42    |
-| Forth           | 5x5              | 0.32,0.45   | 1,0.62,0.42    |
-| Fifth           | 3x3              | 0.64,0.72   | 1,0.62,0.42    |
+# Windows
+.venv\Scripts\activate
 
-## How to run
+# Mac/Linux
+source .venv/bin/activate
 
-### opencv
-
-```
-python opencv_dnn_infer.py  --img-path /path/to/your/img
-```
-
-### paddle
-
-on image：
-
-```
-python paddle_infer.py  --img-path /path/to/your/img
+cd FaceMaskDetection
+pip install -r requirements.txt
 ```
 
-### pytorch
+---
 
-on image：
+## How to Run
 
-```
-python pytorch_infer.py  --img-path /path/to/your/img
-```
+### Paddle (Recommended)
 
-on video：
-
-```
-python pytorch_infer.py --img-mode 0 --video-path /path/to/video
-# If you want to run with camera video, set  video_path to be 0
-python pytorch_infer.py --img-mode 0 --video-path 0
+**Live Webcam:**
+```bash
+python FaceMaskDetection-master/paddle_infer.py --source 0
 ```
 
-### TensorFlow/Keras/MXNet/Caffe
-
-The other four frameworks running method is similar to pytorch, just replace `pytorch`with `tensorflow`, `keras`,`caffe`，`mxnet`,
-if you want to use tensorflow, just run:
-
-```
-python tensorflow_infer.py  --img-path /path/to/your/img
+**Image file:**
+```bash
+python FaceMaskDetection-master/paddle_infer.py --source path/to/image.jpg
 ```
 
-**Attention，for caffe's inference ，we use permute layer，so that we should use [caffe-ssd](https://github.com/weiliu89/caffe/tree/ssd)**，you can use opencv-dnn to do the inference.
+> Press `Q` to quit the webcam window.
 
-If you are following `run.sh`, the repository already includes the converted Paddle model in `models/paddle/`. You do not need to rerun `x2paddle` unless you are rebuilding the model from the Caffe weights yourself.
+> If you get an `OneDnnContext` / `fused_conv2d` error, run:
+> ```bash
+> pip install paddlepaddle==2.6.2
+> ```
 
-### Live webcam / Camera usage
+---
 
-All inference scripts in this repo support running on a live camera using OpenCV's `VideoCapture`. Below are example commands and notes for using your webcam.
+### OpenCV DNN
 
-- PyTorch:
-
-```
-python pytorch_infer.py --img-mode 0 --video-path 0
-```
-
-- Keras:
-
-```
-python keras_infer.py --img-mode 0 --video-path 0
+**Image:**
+```bash
+python opencv_dnn_infer.py --img-path /path/to/image.jpg
 ```
 
-- TensorFlow:
-
-```
-python tensorflow_infer.py --img-mode 0 --video-path 0
-```
-
-- OpenCV DNN:
-
-```
+**Webcam:**
+```bash
 python opencv_dnn_infer.py --img-mode 0 --video-path 0
 ```
 
-- Caffe / MXNet: replace the script name similarly, for example:
+---
 
+### PyTorch
+
+**Image:**
+```bash
+python pytorch_infer.py --img-path /path/to/image.jpg
 ```
+
+**Webcam:**
+```bash
+python pytorch_infer.py --img-mode 0 --video-path 0
+```
+
+---
+
+### TensorFlow / Keras / MXNet / Caffe
+
+Replace the script name:
+
+```bash
+python tensorflow_infer.py --img-path /path/to/image.jpg
+python keras_infer.py --img-mode 0 --video-path 0
 python caffe_infer.py --img-mode 0 --video-path 0
 ```
 
-- Paddle (scripts `paddle_infer.py` and `paddle_infer_slow.py`): these scripts open camera directly; run:
+> For Caffe inference, use [caffe-ssd](https://github.com/weiliu89/caffe/tree/ssd) or use `opencv_dnn_infer.py` instead.
 
+---
+
+## Dependencies
+
+| Package | Install |
+|---------|---------|
+| Base (all scripts) | `pip install opencv-python numpy Pillow` |
+| Paddle | `pip install paddlepaddle==2.6.2` |
+| PyTorch | `pip install torch torchvision` |
+| TensorFlow/Keras | `pip install tensorflow keras h5py` |
+
+Or just run:
+```bash
+pip install -r requirements.txt
 ```
-python paddle_infer.py
-```
 
-If you hit an `x2paddle` / `OneDnnContext` error during conversion, skip the conversion step and use the bundled `models/paddle/` directory instead. That avoids the failing fused-conv path entirely.
+---
 
-Notes:
+## Notes
 
-- Use `--video-path 0` to select the default camera. If your camera index is different try `1`, `2`, etc. Some scripts accept the string `'0'` which the code converts to integer `0` internally.
-- To stop the live demo, close the OpenCV window or press Ctrl+C in the terminal. Some scripts call `cv2.waitKey(1)` and will not exit until the window is closed.
-- Dependencies: at minimum install `opencv-python`, `numpy`, and `Pillow` for image display. Install the specific framework you want to use only if required (PyTorch, TensorFlow/Keras, Paddle, MXNet, or Caffe).
-  - Base: `pip install opencv-python numpy Pillow`
-  - PyTorch (optional): `pip install torch torchvision`
-  - TensorFlow/Keras (optional): `pip install tensorflow keras h5py`
-  - Paddle (optional): follow Paddle install docs, e.g. `pip install paddlepaddle` (choose GPU variant if needed)
-  - MXNet / Caffe: follow their respective install instructions (Caffe typically requires compiling native binaries)
-- `opencv_dnn_infer.py` uses `simhei.ttf` for Chinese text. If you don't have that font the script will fail when drawing Chinese characters — either provide a `.ttf` file or remove/adjust the font usage in the script.
-- On Windows, ensure the application has camera permission (Settings → Privacy → Camera).
+- Use `--video-path 0` or `--source 0` for default webcam. Try `1`, `2` if camera not found.
+- On Windows: make sure camera permission is enabled — Settings → Privacy → Camera.
+- `opencv_dnn_infer.py` requires `simhei.ttf` for Chinese text rendering.
+- The repo includes a pre-converted Paddle model in `models/paddle/` — no need to rerun `x2paddle`.
+
+---
 
 ## Appendix
 
-### Model structure
+### Model Architecture
 
-We merge the BN to Conv layers in order to accelerate the inference speed.
+![](FaceMaskDetection-master/img/face_mask_detection.caffemodel.png)
 
-![](img/face_mask_detection.caffemodel.png)
+### PR Curve
 
-### Testset PR curve
-
-![](img/pr_curve.png)
+![](FaceMaskDetection-master/img/pr_curve.png)
