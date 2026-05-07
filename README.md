@@ -46,7 +46,7 @@ python -m venv .venv
 # Mac/Linux
 source .venv/bin/activate
 
-cd FaceMaskDetection
+cd FaceMaskDetection-master
 pip install -r requirements.txt
 ```
 
