@@ -4,9 +4,16 @@ import numpy as np
 from utils.anchor_generator import generate_anchors
 from utils.anchor_decode import decode_bbox
 from utils.nms import single_class_non_max_suppression
-import paddle.fluid as fluid
-from paddle.fluid.core import AnalysisConfig
-from paddle.fluid.core import create_paddle_predictor
+
+try:
+    from paddle.inference import Config as PaddleConfig
+    from paddle.inference import create_predictor
+except ImportError:
+    import paddle.fluid as fluid
+    from paddle.fluid.core import AnalysisConfig
+    from paddle.fluid.core import create_paddle_predictor
+    PaddleConfig = None
+    create_predictor = None
 
 # anchor configuration
 feature_map_sizes = [[33, 33], [17, 17], [9, 9], [5, 5], [3, 3]]
@@ -27,9 +34,16 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Face Mask Detection")
     parser.add_argument('--model_dir', type=str, default='models/paddle', help='model path')
     args = parser.parse_args()
-    config = AnalysisConfig(args.model_dir+"/__model__",args.model_dir+"/__params__")
-    config.disable_gpu()
-    predictor = create_paddle_predictor(config)
+    if PaddleConfig is not None:
+        config = PaddleConfig(args.model_dir+"/__model__", args.model_dir+"/__params__")
+        config.disable_gpu()
+        config.switch_ir_optim(False)
+        predictor = create_predictor(config)
+    else:
+        config = AnalysisConfig(args.model_dir+"/__model__",args.model_dir+"/__params__")
+        config.disable_gpu()
+        config.switch_ir_optim(False)
+        predictor = create_paddle_predictor(config)
     cap = cv2.VideoCapture(0)
     target_shape=(260, 260)
     while True:
@@ -44,10 +58,18 @@ if __name__ == "__main__":
         image_np = image_np.transpose(2,0,1)
         img = np.expand_dims(image_np,axis=0).copy()
         img = img.astype("float32")
-        image = fluid.core.PaddleTensor(img)
-        y_bboxes_output, y_cls_output = predictor.run([image])
-        y_bboxes_output = y_bboxes_output.as_ndarray()
-        y_cls_output = y_cls_output.as_ndarray()
+        if hasattr(predictor, "get_input_handle"):
+            input_names = predictor.get_input_names()
+            predictor.get_input_handle(input_names[0]).copy_from_cpu(img)
+            predictor.run()
+            output_names = predictor.get_output_names()
+            y_bboxes_output = predictor.get_output_handle(output_names[0]).copy_to_cpu()
+            y_cls_output = predictor.get_output_handle(output_names[1]).copy_to_cpu()
+        else:
+            image = fluid.core.PaddleTensor(img)
+            y_bboxes_output, y_cls_output = predictor.run([image])
+            y_bboxes_output = y_bboxes_output.as_ndarray()
+            y_cls_output = y_cls_output.as_ndarray()
         y_bboxes = decode_bbox(anchors_exp, y_bboxes_output)[0]
         y_cls = y_cls_output[0]
         # To speed up, do single class NMS, not multiple classes NMS.
